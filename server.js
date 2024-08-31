@@ -6,7 +6,7 @@ let userlist=[
  {id:2,name:"reddy"}
 ]
 app.get('/users',(req,res)=>{
-    res.send({message:"all users"})
+    res.send({message:"all users",payload:userlist})
 })
 app.get('/users/:id',(req,res)=>{
     let useridbyurl=Number(req.params.id)
