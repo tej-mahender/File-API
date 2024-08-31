@@ -44,4 +44,4 @@ app.delete('/users/:id',(req,res)=>{
     res.send({message:"user deleted",payload:userlist})
     }
 })
-app.listen(4000,()=>console.log("Http server is activated"))
+app.listen(4000,()=>console.log("Http server is activated"));
