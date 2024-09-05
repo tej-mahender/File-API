@@ -1,6 +1,5 @@
 const jwt=require('jsonwebtoken')
 require('dotenv').config()
-
 const tokenVerify=(req,res,next)=>{
     //get bearerToken frpm "headers" property of req object
     const bearerToken = req.headers.authorization
