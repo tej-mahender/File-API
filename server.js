@@ -83,5 +83,4 @@ app.use((err,req,res,next)=>{
 //     .then(() => res.status(200).send('File uploaded and stored in ' + courseName + ' collection.'))
 //     .catch(err => res.status(500).send('Error uploading file: ' + err));
 // });
-
 // app.listen(3000, () => console.log('Server started on port 3000'));

@@ -7,10 +7,8 @@ const tokenVerify = require('../middlewares/tokenVerify')
 const expressAsyncHandler=require('express-async-handler')
 //app body parser middleware
 userApp.use(exp.json())
-
 require('dotenv').config();
 //create sample rest api(req handlers-routes)
-
 //route for get users (public route)
 userApp.get('/users',tokenVerify,expressAsyncHandler(async (req,res)=>{
     //get user collection obj
@@ -20,7 +18,6 @@ userApp.get('/users',tokenVerify,expressAsyncHandler(async (req,res)=>{
     //send users data to client
     res.send({message:"users", payload:usersdata})
 }))
-
 //route to get specific user by username (protected route)
 userApp.get('/users/:username',tokenVerify,expressAsyncHandler(async(req,res)=>{
    //get userCollection obj
@@ -32,8 +29,6 @@ userApp.get('/users/:username',tokenVerify,expressAsyncHandler(async(req,res)=>{
    //send res
    res.send({message:"user",payload:user})
 }))
-
-
 //route to post or create user (public route)
 userApp.post('/user',expressAsyncHandler(async (req,res)=>{
     const userCollection=req.app.get('users');
