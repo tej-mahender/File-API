@@ -49,7 +49,9 @@ userApp.post('/user',expressAsyncHandler(async (req,res)=>{
         let hashPass=await bcryptjs.hash(user.password,7)
         //replace pass with Hashpass
         user.password=hashPass;
-        user.products=[];
+        user.uploads=[];
+        user.saved=[];
+        user.liked=[];
         //save user
         await userCollection.insertOne(user)
         //send res
