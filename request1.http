@@ -1,0 +1,31 @@
+POST http://localhost:4000/courses/JavaScript/files
+Content-Type: application/json
+
+{
+  "url": "https://drive.google.com/file/d/1abc...xyz",
+  "fileName": "Lecture Notes",
+  "tags": ["notes", "lecture", "week1"],
+  "uploaderName": "Vimala"
+}
+
+###
+DELETE http://localhost:4000/courses/JavaScript/files/Lecture%20Notes
+
+
+###
+
+PUT http://localhost:4000/courses/JavaScript/files/Lecture%20Notes
+Content-Type: application/json
+
+{
+  "url": "https://drive.google.com/file/d/updatedURL",
+  "tags": ["updated", "tags"]
+}
+
+
+###
+
+GET http://localhost:4000/courses/JavaScript/files/search?tag=lecture
+
+
+

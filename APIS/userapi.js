@@ -102,5 +102,4 @@ userApp.delete('/user/:username',tokenVerify,expressAsyncHandler(async (req,res)
    //send res
    res.send({message:"user deleted",payload:deletedUser})
 }))
-
 module.exports = userApp;
