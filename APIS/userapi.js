@@ -5,6 +5,7 @@ const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const tokenVerify = require('../middlewares/tokenVerify')
 const expressAsyncHandler=require('express-async-handler')
+
 //app body parser middleware
 userApp.use(exp.json())
 
@@ -82,7 +83,12 @@ userApp.post('/login',expressAsyncHandler(async(req,res)=>{
                 //create JWT token
             let signedToken=jwt.sign({username:user.username},process.env.SECRET_KEY,{expiresIn:'1h'})
             //send res
-            res.send({message:"login success",token:signedToken,user:user})
+            res.send({message:"login success",
+                token:signedToken,
+                user:{
+                    username:dbUser.username,
+                    _id: dbUser._id,
+                }})
             }
     }
 }))

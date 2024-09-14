@@ -20,15 +20,18 @@ mC.connect()
     //connect to a collection
     const users = backend.collection('users')
     const TestCourses = backend.collection('TestCourses')
+    const courses = backend.collection('courses')
 
     //share collection obj to APIs 
     app.set('users',users) 
     app.set('TestCourses',TestCourses)
+    app.set('courses',courses)
 
     //assign port number to http server of express app
-    app.listen(process.env.PORT,()=>console.log("http server started on port 4000"))
+    app.listen(process.env.PORT,()=>console.log(`Server started on port ${process.env.PORT}`))
 })
 .catch(err=>console.log(err))
+
 //import userApp express object
 const userApp = require('./APIs/userApi');
 const courseApp = require('./APIs/courseApi');
@@ -44,51 +47,5 @@ app.use('*',(req,res,next)=>{
 
 //error handling middleware
 app.use((err,req,res,next)=>{
-    res.send({message:"error occured",errorMessage:err.message})
+    res.send({message:"Error occured",errorMessage:err.message})
 })
-
-// const express = require('express');
-// const mongoose = require('mongoose');
-// const multer = require('multer'); // For handling file uploads
-// const app = express();
-
-// // Connect to MongoDB Atlas
-// mongoose.connect('mongodb+srv://<username>:<password>@cluster.mongodb.net/<database>?retryWrites=true&w=majority', {
-//   useNewUrlParser: true,
-//   useUnifiedTopology: true
-// });
-
-// // Middleware for parsing incoming form-data
-// const upload = multer({ dest: 'uploads/' });
-
-// // Dynamic schema for storing course data
-// function getCourseSchema(courseName) {
-//   return new mongoose.Schema({
-//     filename: String,
-//     filepath: String,
-//     uploadedBy: String,
-//     uploadedAt: { type: Date, default: Date.now }
-//   }, { collection: courseName });
-// }
-
-// // Upload file route
-// app.post('/upload', upload.single('file'), (req, res) => {
-//   const { courseName, uploadedBy } = req.body;
-//   const file = req.file;
-
-//   // Dynamically create or retrieve the schema for the course
-//   const Course = mongoose.model(courseName, getCourseSchema(courseName));
-
-//   // Save file data into the course collection
-//   const newFileEntry = new Course({
-//     filename: file.originalname,
-//     filepath: file.path,
-//     uploadedBy: uploadedBy,
-//   });
-
-//   newFileEntry.save()
-//     .then(() => res.status(200).send('File uploaded and stored in ' + courseName + ' collection.'))
-//     .catch(err => res.status(500).send('Error uploading file: ' + err));
-// });
-
-// app.listen(3000, () => console.log('Server started on port 3000'));
