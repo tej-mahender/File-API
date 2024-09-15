@@ -116,4 +116,50 @@ userApp.delete('/user/:username',tokenVerify,expressAsyncHandler(async (req,res)
    res.send({message:"user deleted",payload:deletedUser})
 }))
 
+userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
+    //get user collection obj
+    const userCollection=req.app.get('users');
+     let usernameURL=req.params.username;
+     let productObj=req.body;
+    let result= await userCollection.updateOne({username:usernameURL},{$push:{saved:productObj}})
+    console.log(result)
+    res.send({message:"file added to saved",payload:result})
+ }))
+
+ userApp.put('/add-to-liked/:username',expressAsyncHandler(async(req,res)=>{
+    //get user collection obj
+    const userCollection=req.app.get('users');
+     let usernameURL=req.params.username;
+     let productObj=req.body;
+    let result= await userCollection.updateOne({username:usernameURL},{$push:{liked:productObj}})
+    console.log(result)
+    res.send({message:"file added to liked",payload:result})
+ }))
+
+ //fetch user uploads
+ userApp.get('/user-uploads/:username',expressAsyncHandler(async(req,res)=>{
+    const userCollection=req.app.get('users');
+    let usernameURL=req.params.username;
+    let user=await userCollection.findOne({username:usernameURL})
+    let uploads=user.uploads
+    res.send({message:"user uploads",payload:uploads})
+ }))
+
+  //fetch user saved
+  userApp.get('/user-saved/:username',expressAsyncHandler(async(req,res)=>{
+    const userCollection=req.app.get('users');
+    let usernameURL=req.params.username;
+    let user=await userCollection.findOne({username:usernameURL})
+    let saved=user.saved
+    res.send({message:"user saved",payload:saved})
+ }))
+
+  //fetch user liked
+  userApp.get('/user-liked/:username',expressAsyncHandler(async(req,res)=>{
+    const userCollection=req.app.get('users');
+    let usernameURL=req.params.username;
+    let user=await userCollection.findOne({username:usernameURL})
+    let liked=user.liked
+    res.send({message:"user liked",payload:liked})
+ }))
 module.exports = userApp;
