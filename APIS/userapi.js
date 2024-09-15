@@ -5,6 +5,7 @@ const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const tokenVerify = require('../middlewares/tokenVerify')
 const expressAsyncHandler=require('express-async-handler')
+
 //app body parser middleware
 userApp.use(exp.json())
 require('dotenv').config();
@@ -44,7 +45,9 @@ userApp.post('/user',expressAsyncHandler(async (req,res)=>{
         let hashPass=await bcryptjs.hash(user.password,7)
         //replace pass with Hashpass
         user.password=hashPass;
-        user.products=[];
+        user.uploads=[];
+        user.saved=[];
+        user.liked=[];
         //save user
         await userCollection.insertOne(user)
         //send res
@@ -75,7 +78,12 @@ userApp.post('/login',expressAsyncHandler(async(req,res)=>{
                 //create JWT token
             let signedToken=jwt.sign({username:user.username},process.env.SECRET_KEY,{expiresIn:'1h'})
             //send res
-            res.send({message:"login success",token:signedToken,user:user})
+            res.send({message:"login success",
+                token:signedToken,
+                user:{
+                    username:dbUser.username,
+                    _id: dbUser._id,
+                }})
             }
     }
 }))
@@ -102,4 +110,50 @@ userApp.delete('/user/:username',tokenVerify,expressAsyncHandler(async (req,res)
    //send res
    res.send({message:"user deleted",payload:deletedUser})
 }))
+userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
+    //get user collection obj
+    const userCollection=req.app.get('users');
+     let usernameURL=req.params.username;
+     let productObj=req.body;
+    let result= await userCollection.updateOne({username:usernameURL},{$push:{saved:productObj}})
+    console.log(result)
+    res.send({message:"file added to saved",payload:result})
+ }))
+
+ userApp.put('/add-to-liked/:username',expressAsyncHandler(async(req,res)=>{
+    //get user collection obj
+    const userCollection=req.app.get('users');
+     let usernameURL=req.params.username;
+     let productObj=req.body;
+    let result= await userCollection.updateOne({username:usernameURL},{$push:{liked:productObj}})
+    console.log(result)
+    res.send({message:"file added to liked",payload:result})
+ }))
+
+ //fetch user uploads
+ userApp.get('/user-uploads/:username',expressAsyncHandler(async(req,res)=>{
+    const userCollection=req.app.get('users');
+    let usernameURL=req.params.username;
+    let user=await userCollection.findOne({username:usernameURL})
+    let uploads=user.uploads
+    res.send({message:"user uploads",payload:uploads})
+ }))
+
+  //fetch user saved
+  userApp.get('/user-saved/:username',expressAsyncHandler(async(req,res)=>{
+    const userCollection=req.app.get('users');
+    let usernameURL=req.params.username;
+    let user=await userCollection.findOne({username:usernameURL})
+    let saved=user.saved
+    res.send({message:"user saved",payload:saved})
+ }))
+
+  //fetch user liked
+  userApp.get('/user-liked/:username',expressAsyncHandler(async(req,res)=>{
+    const userCollection=req.app.get('users');
+    let usernameURL=req.params.username;
+    let user=await userCollection.findOne({username:usernameURL})
+    let liked=user.liked
+    res.send({message:"user liked",payload:liked})
+ }))
 module.exports = userApp;
