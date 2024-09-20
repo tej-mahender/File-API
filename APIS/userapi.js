@@ -131,29 +131,81 @@ userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
  }))
 
  //fetch user uploads
- userApp.get('/user-uploads/:username',expressAsyncHandler(async(req,res)=>{
-    const userCollection=req.app.get('users');
-    let usernameURL=req.params.username;
-    let user=await userCollection.findOne({username:usernameURL})
-    let uploads=user.uploads
-    res.send({message:"user uploads",payload:uploads})
- }))
+ userApp.get('/user-uploads/:username', expressAsyncHandler(async (req, res) => {
+    const userCollection = req.app.get('users');
+    const usernameURL = req.params.username;
 
+    try {
+        const user = await userCollection.findOne({ username: usernameURL });
+
+        if (!user) {
+            return res.status(404).send({ message: 'User not found' });
+        }
+
+        const uploads = user.uploads;
+        const uploadCount = uploads.length; // Get the count of uploads
+
+        res.send({
+            message: "User uploads",
+            payload: {
+                uploads,
+                uploadCount // Ensure you are sending the correct key here
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching user uploads:', error);
+        res.status(500).send({ error: 'Error fetching user uploads', details: error.message });
+    }
+}));
   //fetch user saved
   userApp.get('/user-saved/:username',expressAsyncHandler(async(req,res)=>{
     const userCollection=req.app.get('users');
     let usernameURL=req.params.username;
-    let user=await userCollection.findOne({username:usernameURL})
+    try {
+        const user = await userCollection.findOne({ username: usernameURL });
+
+        if (!user) {
+            return res.status(404).send({ message: 'User not found' });
+        }
     let saved=user.saved
-    res.send({message:"user saved",payload:saved})
+    const savedcount=saved.length;
+    res.send({
+        message: "User Saved",
+        payload: {
+            saved,
+            savedcount
+        }
+    });
+} catch (error) {
+    console.error('Error fetching user saved:', error);
+    res.status(500).send({ error: 'Error fetching user saved data', details: error.message });
+}
  }))
 
   //fetch user liked
   userApp.get('/user-liked/:username',expressAsyncHandler(async(req,res)=>{
     const userCollection=req.app.get('users');
     let usernameURL=req.params.username;
-    let user=await userCollection.findOne({username:usernameURL})
+    try {
+        const user = await userCollection.findOne({ username: usernameURL });
+
+        if (!user) {
+            return res.status(404).send({ message: 'User not found' });
+        }
     let liked=user.liked
-    res.send({message:"user liked",payload:liked})
+    let likedcount=liked.length;
+
+   res.send({
+        message: "User Liked",
+        payload: {
+            liked,
+            likedcount
+        }
+    });
+} catch (error) {
+    console.error('Error fetching user saved:', error);
+    res.status(500).send({ error: 'Error fetching user saved data', details: error.message });
+}
  }))
+
 module.exports = userApp;
