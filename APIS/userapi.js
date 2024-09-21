@@ -9,33 +9,34 @@ const expressAsyncHandler=require('express-async-handler')
 //app body parser middleware
 userApp.use(exp.json())
 require('dotenv').config();
+
 //create sample rest api(req handlers-routes)
 //route for get users (public route)
-userApp.get('/users',tokenVerify,expressAsyncHandler(async (req,res)=>{
-    //get user collection obj
-    const userCollection=req.app.get('users');
-    //get users data from collection of DB
-    let usersdata=await userCollection.find().toArray();
-    //send users data to client
-    res.send({message:"users", payload:usersdata})
-}))
+// userApp.get('/users',tokenVerify,expressAsyncHandler(async (req,res)=>{
+//     //get user collection obj
+//     const userCollection=req.app.get('users');
+//     //get users data from collection of DB
+//     let usersdata=await userCollection.find().toArray();
+//     //send users data to client
+//     res.send({message:"users", payload:usersdata})
+// }))
 //route to get specific user by username (protected route)
-userApp.get('/users/:username',tokenVerify,expressAsyncHandler(async(req,res)=>{
-   //get userCollection obj
-   const userCollection=req.app.get('users');
-   //get id from url
-   const usernameURL=req.params.username;
-   //find user by username
-   let user=await userCollection.findOne({username:{$eq:{usernameURL}}});
-   //send res
-   res.send({message:"user",payload:user})
-}))
+// userApp.get('/users/:username',tokenVerify,expressAsyncHandler(async(req,res)=>{
+//    //get userCollection obj
+//    const userCollection=req.app.get('users');
+//    //get id from url
+//    const usernameURL=req.params.username;
+//    //find user by username
+//    let user=await userCollection.findOne({username:{$eq:{usernameURL}}});
+//    //send res
+//    res.send({message:"user",payload:user})
+// }))
+
 //route to post or create user (public route)
 userApp.post('/user',expressAsyncHandler(async (req,res)=>{
     const userCollection=req.app.get('users');
     //get user data from req body
     const user=req.body;
-
     //verify duplicate user
     let existUser = await userCollection.findOne({username:user.username})
     if(existUser!==null){
@@ -53,7 +54,6 @@ userApp.post('/user',expressAsyncHandler(async (req,res)=>{
         //send res
         res.send({message:"user created",payload:existUser})
     }
-
 }))
 
 //user login or authentication (public route)
@@ -110,22 +110,40 @@ userApp.delete('/user/:username',tokenVerify,expressAsyncHandler(async (req,res)
    //send res
    res.send({message:"user deleted",payload:deletedUser})
 }))
+
 userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
     //get user collection obj
     const userCollection=req.app.get('users');
      let usernameURL=req.params.username;
-     let productObj=req.body;
-    let result= await userCollection.updateOne({username:usernameURL},{$push:{saved:productObj}})
+     let file=req.body;
+    let result= await userCollection.updateOne(
+        {username:usernameURL},
+        {$addToSet:{saved:file}
+    })
     console.log(result)
     res.send({message:"file added to saved",payload:result})
  }))
 
+ 
+ userApp.put('/remove-from-saved/:username', expressAsyncHandler(async (req, res) => {
+    const userCollection = req.app.get('users');
+    let usernameURL = req.params.username;
+    let file = req.body;
+    let result = await userCollection.updateOne(
+      { username: usernameURL },
+      { $pull: { saved: file } }
+    );
+    console.log(result);
+    res.send({ message: "file removed from saved", payload: result });
+  }));
+
+  
  userApp.put('/add-to-liked/:username',expressAsyncHandler(async(req,res)=>{
     //get user collection obj
     const userCollection=req.app.get('users');
      let usernameURL=req.params.username;
-     let productObj=req.body;
-    let result= await userCollection.updateOne({username:usernameURL},{$push:{liked:productObj}})
+     let file=req.body;
+    let result= await userCollection.updateOne({username:usernameURL},{$addToSet:{liked:file}})
     console.log(result)
     res.send({message:"file added to liked",payload:result})
  }))
@@ -156,4 +174,5 @@ userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
     let liked=user.liked
     res.send({message:"user liked",payload:liked})
  }))
+
 module.exports = userApp;
