@@ -67,6 +67,57 @@ console.log(newFile);
     }
 }));
 
+
+
+
+
+
+
+courseApp.post('/:courseName/files', expressAsyncHandler(async (req, res) => {
+    try {
+        const { url, fileName, tags, uploaderName, userId } = req.body;
+        console.log(req.body); 
+        const courseName = req.params.courseName;
+
+        if (!url || !fileName || !tags || !uploaderName || !userId) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        // Get the current date and time for the upload
+        const uploadDate = new Date();  // Automatically captures the current date and time
+
+        // Collections
+        const coursesCollection = req.app.get('courses');
+        const usersCollection = req.app.get('users');
+
+        let course = await coursesCollection.findOne({ courseName });
+        if (!course) {
+            course = { courseName, files: [] };
+        }
+
+        const newFile = { url, fileName, tags, uploaderName, uploadDate };
+
+        // Add the file to the course's files array
+        course.files.push(newFile);
+        await coursesCollection.updateOne(
+            { courseName },
+            { $set: { files: course.files } }, 
+            { upsert: true }
+        );
+
+        // Update the user's uploads array
+        await usersCollection.updateOne(
+            { _id: new ObjectId(userId) },
+            { $push: { uploads: newFile } }
+        );
+
+        res.status(201).json({ message: 'File uploaded successfully', file: course.files[course.files.length - 1] });
+    } catch (err) {
+        console.error('Error uploading file:', err);
+        res.status(500).json({ error: 'Error uploading file', details: err.message });
+    }
+}));
+
 module.exports = courseApp
 
 // // Route to delete a file by courseName and fileName

@@ -124,7 +124,7 @@ userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
     res.send({message:"file added to saved",payload:result})
  }))
 
- 
+
  userApp.put('/remove-from-saved/:username', expressAsyncHandler(async (req, res) => {
     const userCollection = req.app.get('users');
     let usernameURL = req.params.username;
@@ -174,5 +174,70 @@ userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
     let liked=user.liked
     res.send({message:"user liked",payload:liked})
  }))
+
+
+
+
+
+
+
+
+ userApp.get('/user-uploads/:username', expressAsyncHandler(async (req, res) => {
+    const userCollection = req.app.get('users');
+    const usernameURL = req.params.username;
+    try {
+        const user = await userCollection.findOne({ username: usernameURL });
+        if (!user) {
+            return res.status(404).send({ message: 'User not found' });
+        }
+        const uploads = user.uploads;
+        const uploadCount = uploads.length; // Get the count of uploads
+        res.send({
+            message: "User uploads",
+            payload: {
+                uploads,
+                uploadCount // Ensure you are sending the correct key here
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching user uploads:', error);
+        res.status(500).send({ error: 'Error fetching user uploads', details: error.message });
+    }
+}));
+userApp.get('/user-uploads/:username/daily', expressAsyncHandler(async (req, res) => {
+    const userCollection = req.app.get('users');
+    const usernameURL = req.params.username;
+    try {
+        const user = await userCollection.findOne({ username: usernameURL });
+        if (!user) {
+            return res.status(404).send({ message: 'User not found' });
+        }
+        if (!user.uploads || user.uploads.length === 0) {
+            return res.send({ message: "No uploads found", payload: [] });
+        }
+        // Aggregating uploads by date
+        const uploadCountsByDate = user.uploads.reduce((acc, upload) => {
+            const uploadDate = new Date(upload.uploadDate);
+            if (isNaN(uploadDate.getTime())) { // Check if date is valid
+                console.error('Invalid date value:', upload.uploadDate);
+                return acc; // Skip invalid date entries
+            }
+            const date = new Date(upload.uploadDate).toISOString().split('T')[0]; // format the date
+            acc[date] = (acc[date] || 0) + 1; // increment the count for each date
+            return acc;
+        }, {});
+        const formattedData = Object.entries(uploadCountsByDate).map(([date, count]) => ({
+            date,
+            uploads: count
+        }));
+        res.send({
+            message: "User uploads",
+            payload: formattedData // Send the aggregated data
+        });
+    } catch (error) {
+        console.error('Error fetching user uploads:', error);
+        res.status(500).send({ error: 'Error fetching user uploads', details: error.message });
+    }
+}));
 
 module.exports = userApp;
