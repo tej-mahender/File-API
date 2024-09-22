@@ -27,54 +27,6 @@ courseApp.get('/:courseName/files', expressAsyncHandler(async (req, res, next) =
 // Route to upload a file for a specific course
 courseApp.post('/:courseName/files', expressAsyncHandler(async (req, res) => {
     try {
-        const { url, fileName, tags, uploaderName,userId } = req.body;
-        console.log(req.body); 
-        const courseName = req.params.courseName;
-
-        if (!url || !fileName || !tags || !uploaderName || !userId) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
-
-        // const db = getDb(req);
-        const coursesCollection = req.app.get('courses');
-        const usersCollection = req.app.get('users')
-
-        let course = await coursesCollection.findOne({ courseName });
-        if (!course) {
-            course = { courseName, files: [] };
-        }
-
-        const newFile = { url, fileName, tags, uploaderName };
-console.log(newFile);
-        // Add the file to the course's files array
-        course.files.push(newFile);
-        await coursesCollection.updateOne(
-            { courseName },
-            { $set: { files: course.files } }, 
-            { upsert: true }
-        );
-
-        // Update the user's uploads array
-        await usersCollection.updateOne(
-            { _id: new ObjectId(userId) },
-            { $push: { uploads: newFile } }
-        );
-
-        res.status(201).json({ message: 'File uploaded successfully', file: course.files[course.files.length - 1] });
-    } catch (err) {
-        console.error('Error uploading file:', err);
-        res.status(500).json({ error: 'Error uploading file', details: err.message });
-    }
-}));
-
-
-
-
-
-
-
-courseApp.post('/:courseName/files', expressAsyncHandler(async (req, res) => {
-    try {
         const { url, fileName, tags, uploaderName, userId } = req.body;
         console.log(req.body); 
         const courseName = req.params.courseName;

@@ -222,7 +222,7 @@ userApp.get('/user-uploads/:username/daily', expressAsyncHandler(async (req, res
                 console.error('Invalid date value:', upload.uploadDate);
                 return acc; // Skip invalid date entries
             }
-            const date = new Date(upload.uploadDate).toISOString().split('T')[0]; // format the date
+            const date = uploadDate.toISOString().split('T')[0]; // format the date
             acc[date] = (acc[date] || 0) + 1; // increment the count for each date
             return acc;
         }, {});
