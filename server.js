@@ -35,7 +35,6 @@ mC.connect()
 //import userApp express object
 const userApp = require('./APIs/userApi');
 const courseApp = require('./APIs/courseApi');
-
 //if path starts with user-api forward to userApp
 app.use('/user-api',userApp)
 app.use('/course-api',courseApp)

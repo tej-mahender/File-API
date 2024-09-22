@@ -22,12 +22,24 @@ courseApp.get('/:courseName/files', expressAsyncHandler(async (req, res, next) =
         next(error);
     }
 }));
-
-
+// courseApp.get('/courses/upload-counts', async (req, res) => {
+//     try {
+//       console.log('Fetching course upload counts...'); // Log the operation
+  
+//       // Fetch the course data from MongoDB
+//       const courses = await fetchCourseUploadCounts();
+  
+//       console.log('Courses found:', courses); // Log the results
+//       res.status(200).json({ courseUploadCounts: courses }); // Send data as JSON to the frontend
+//     } catch (err) {
+//       console.error('Error fetching courses:', err);
+//       res.status(500).json({ error: 'Error fetching courses' }); // Send error response if something fails
+//     }
+//   });
 // Route to upload a file for a specific course
 courseApp.post('/:courseName/files', expressAsyncHandler(async (req, res) => {
     try {
-        const { url, fileName, tags, uploaderName,userId } = req.body;
+        const { url, fileName, tags, uploaderName, userId } = req.body;
         console.log(req.body); 
         const courseName = req.params.courseName;
 
@@ -35,17 +47,20 @@ courseApp.post('/:courseName/files', expressAsyncHandler(async (req, res) => {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
-        // const db = getDb(req);
+        // Get the current date and time for the upload
+        const uploadDate = new Date();  // Automatically captures the current date and time
+
+        // Collections
         const coursesCollection = req.app.get('courses');
-        const usersCollection = req.app.get('users')
+        const usersCollection = req.app.get('users');
 
         let course = await coursesCollection.findOne({ courseName });
         if (!course) {
             course = { courseName, files: [] };
         }
 
-        const newFile = { url, fileName, tags, uploaderName };
-console.log(newFile);
+        const newFile = { url, fileName, tags, uploaderName, uploadDate };
+
         // Add the file to the course's files array
         course.files.push(newFile);
         await coursesCollection.updateOne(
@@ -66,7 +81,6 @@ console.log(newFile);
         res.status(500).json({ error: 'Error uploading file', details: err.message });
     }
 }));
-
 module.exports = courseApp
 
 // // Route to delete a file by courseName and fileName

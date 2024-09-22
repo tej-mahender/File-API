@@ -157,6 +157,42 @@ userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
         res.status(500).send({ error: 'Error fetching user uploads', details: error.message });
     }
 }));
+userApp.get('/user-uploads/:username/daily', expressAsyncHandler(async (req, res) => {
+    const userCollection = req.app.get('users');
+    const usernameURL = req.params.username;
+    try {
+        const user = await userCollection.findOne({ username: usernameURL });
+        if (!user) {
+            return res.status(404).send({ message: 'User not found' });
+        }
+        if (!user.uploads || user.uploads.length === 0) {
+            return res.send({ message: "No uploads found", payload: [] });
+        }
+        // Aggregating uploads by date
+        const uploadCountsByDate = user.uploads.reduce((acc, upload) => {
+            const uploadDate = new Date(upload.uploadDate);
+            if (isNaN(uploadDate.getTime())) { // Check if date is valid
+                console.error('Invalid date value:', upload.uploadDate);
+                return acc; // Skip invalid date entries
+            }
+            const date = uploadDate.toISOString().split('T')[0]; // format the date
+            acc[date] = (acc[date] || 0) + 1; // increment the count for each date
+            return acc;
+        }, {});
+        const formattedData = Object.entries(uploadCountsByDate).map(([date, count]) => ({
+            date,
+            uploads: count
+        }));
+        res.send({
+            message: "User uploads",
+            payload: formattedData // Send the aggregated data
+        });
+    } catch (error) {
+        console.error('Error fetching user uploads:', error);
+        res.status(500).send({ error: 'Error fetching user uploads', details: error.message });
+    }
+}));
+
   //fetch user saved
   userApp.get('/user-saved/:username',expressAsyncHandler(async(req,res)=>{
     const userCollection=req.app.get('users');
@@ -207,5 +243,32 @@ userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
     res.status(500).send({ error: 'Error fetching user saved data', details: error.message });
 }
  }))
-
+ userApp.get('/user-uploads/:username/', async (req, res) => {
+    const { username } = req.params; // Use the correct param name
+  
+    try {
+      // Aggregate uploads by date for the given user
+      const uploads = await Uploads.aggregate([
+        { $match: { uploaderName: username } }, // Match on uploader's name
+        { $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$uploadDate" } }, // Group by uploadDate
+            count: { $sum: 1 } // Count the number of uploads for each day
+          }
+        },
+        { $sort: { _id: 1 } } // Sort by date
+      ]);
+  
+      // Format the response
+      const responseData = uploads.map(upload => ({
+        date: upload._id,  // Date in 'YYYY-MM-DD' format
+        uploads: upload.count  // Number of uploads
+      }));
+  
+      res.json({ message: 'User uploads', payload: responseData });
+    } catch (error) {
+      console.error('Error fetching upload data:', error);
+      res.status(500).json({ message: 'Error fetching data' });
+    }
+  });
+  
 module.exports = userApp;
