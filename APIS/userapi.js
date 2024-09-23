@@ -5,6 +5,7 @@ const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const tokenVerify = require('../middlewares/tokenVerify')
 const expressAsyncHandler=require('express-async-handler')
+const moment = require('moment')
 
 //app body parser middleware
 userApp.use(exp.json())
@@ -148,38 +149,49 @@ userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
     res.send({message:"file added to liked",payload:result})
  }))
 
- //fetch user uploads
- userApp.get('/user-uploads/:username',expressAsyncHandler(async(req,res)=>{
-    const userCollection=req.app.get('users');
-    let usernameURL=req.params.username;
-    let user=await userCollection.findOne({username:usernameURL})
-    let uploads=user.uploads
-    res.send({message:"user uploads",payload:uploads})
- }))
-
   //fetch user saved
   userApp.get('/user-saved/:username',expressAsyncHandler(async(req,res)=>{
     const userCollection=req.app.get('users');
     let usernameURL=req.params.username;
-    let user=await userCollection.findOne({username:usernameURL})
-    let saved=user.saved
-    res.send({message:"user saved",payload:saved})
+    try {
+        const user = await userCollection.findOne({ username: usernameURL });
+        if (!user) {
+            return res.status(404).send({ message: 'User not found' });
+        }
+        const saved = user.saved;
+        res.send({
+            message: "User saved",
+            payload: {
+                saved // Ensure you are sending the correct key here
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching user saved:', error);
+        res.status(500).send({ error: 'Error fetching user saved', details: error.message });
+    }
  }))
 
   //fetch user liked
   userApp.get('/user-liked/:username',expressAsyncHandler(async(req,res)=>{
     const userCollection=req.app.get('users');
-    let usernameURL=req.params.username;
-    let user=await userCollection.findOne({username:usernameURL})
-    let liked=user.liked
-    res.send({message:"user liked",payload:liked})
+    const usernameURL = req.params.username;
+    try {
+        const user = await userCollection.findOne({ username: usernameURL });
+        if (!user) {
+            return res.status(404).send({ message: 'User not found' });
+        }
+        const liked = user.liked;
+        res.send({
+            message: "User liked",
+            payload: {
+                liked // Ensure you are sending the correct key here
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching user liked:', error);
+        res.status(500).send({ error: 'Error fetching user liked', details: error.message });
+    }
  }))
-
-
-
-
-
-
 
 
  userApp.get('/user-uploads/:username', expressAsyncHandler(async (req, res) => {
@@ -191,12 +203,10 @@ userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
             return res.status(404).send({ message: 'User not found' });
         }
         const uploads = user.uploads;
-        const uploadCount = uploads.length; // Get the count of uploads
         res.send({
             message: "User uploads",
             payload: {
-                uploads,
-                uploadCount // Ensure you are sending the correct key here
+                uploads // Ensure you are sending the correct key here
             }
         });
     } catch (error) {
@@ -204,6 +214,7 @@ userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
         res.status(500).send({ error: 'Error fetching user uploads', details: error.message });
     }
 }));
+
 userApp.get('/user-uploads/:username/daily', expressAsyncHandler(async (req, res) => {
     const userCollection = req.app.get('users');
     const usernameURL = req.params.username;
@@ -239,5 +250,56 @@ userApp.get('/user-uploads/:username/daily', expressAsyncHandler(async (req, res
         res.status(500).send({ error: 'Error fetching user uploads', details: error.message });
     }
 }));
+
+
+
+userApp.get('/user-streak/:username', async (req, res) => {
+    const username = req.params.username;
+    try {
+      const uploadsCollection =req.app.get('users');
+      console.log(uploadsCollection);
+      // Fetch all uploads for the user, sorted by date (newest first)
+      const uploads = await uploadsCollection.find({ username }).sort({ date: -1 }).toArray();
+      if (!uploads.length) {
+        return res.status(200).json({ currentStreak: 0, longestStreak: 0 });
+      }
+      // Calculate streaks
+      let currentStreak = 0;
+      let longestStreak = 0;
+      let streak = 0;
+      let today = moment().startOf('day');
+  
+      for (let i = 0; i < uploads.length; i++) {
+        let uploadDate = moment(uploads[i].date).startOf('day');
+        let difference = today.diff(uploadDate, 'days');
+  
+        if (difference === 0 || difference === 1) {
+          streak++;
+          currentStreak = streak;
+          today = today.subtract(1, 'days');
+        } else {
+          if (streak > longestStreak) {
+            longestStreak = streak;
+          }
+          streak = 0;
+          today = moment(uploads[i].date).startOf('day');
+        }
+      }
+  
+      // Update longest streak if current streak was the longest
+      if (streak > longestStreak) {
+        longestStreak = streak;
+      }
+  
+      res.status(200).json({
+        currentStreak,
+        longestStreak
+      });
+    } catch (err) {
+      console.error('Error fetching user streak:', err);
+      res.status(500).json({ error: 'Error fetching user streak' });
+    }
+  });
+
 
 module.exports = userApp;
