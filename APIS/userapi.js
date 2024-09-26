@@ -125,19 +125,25 @@ userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
     res.send({message:"file added to saved",payload:result})
  }))
 
-
- userApp.put('/remove-from-saved/:username', expressAsyncHandler(async (req, res) => {
+// Backend route to remove a file from saved items
+userApp.put('/remove-from-saved/:username', expressAsyncHandler(async (req, res) => {
     const userCollection = req.app.get('users');
-    let usernameURL = req.params.username;
-    let file = req.body;
-    let result = await userCollection.updateOne(
-      { username: usernameURL },
-      { $pull: { saved: file } }
-    );
-    console.log(result);
-    res.send({ message: "file removed from saved", payload: result });
+    const usernameURL = req.params.username;
+    const file = req.body; // The file object to remove
+  
+    try {
+      // Remove the file from the saved array
+      const result = await userCollection.updateOne(
+        { username: usernameURL },
+        { $pull: { saved: { driveLink: file.driveLink, fileName: file.fileName } } } // Match by specific fields to ensure correct item removal
+      );
+  
+      res.send({ message: 'File removed from saved', payload: result });
+    } catch (err) {
+      console.error('Error removing from saved:', err);
+      res.status(500).send({ error: 'Error removing from saved', details: err.message });
+    }
   }));
-
   
  userApp.put('/add-to-liked/:username',expressAsyncHandler(async(req,res)=>{
     //get user collection obj
@@ -148,6 +154,27 @@ userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
     console.log(result)
     res.send({message:"file added to liked",payload:result})
  }))
+
+ // Backend route to remove a file from liked items
+userApp.put('/remove-from-liked/:username', expressAsyncHandler(async (req, res) => {
+    const userCollection = req.app.get('users');
+    const usernameURL = req.params.username;
+    const file = req.body; // The file object to remove
+  
+    try {
+      // Remove the file from the saved array
+      const result = await userCollection.updateOne(
+        { username: usernameURL },
+        { $pull: { liked: { driveLink: file.driveLink, fileName: file.fileName } } } // Match by specific fields to ensure correct item removal
+      );
+  
+      res.send({ message: 'File removed from liked', payload: result });
+    } catch (err) {
+      console.error('Error removing from liked:', err);
+      res.status(500).send({ error: 'Error removing from liked', details: err.message });
+    }
+  }));
+
 
   //fetch user saved
   userApp.get('/user-saved/:username',expressAsyncHandler(async(req,res)=>{
