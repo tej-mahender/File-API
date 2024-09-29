@@ -165,7 +165,8 @@ userApp.put('/remove-from-liked/:username', expressAsyncHandler(async (req, res)
       // Remove the file from the saved array
       const result = await userCollection.updateOne(
         { username: usernameURL },
-        { $pull: { liked: { driveLink: file.driveLink, fileName: file.fileName } } } // Match by specific fields to ensure correct item removal
+        { $pull: { liked: { driveLink: file.driveLink, 
+                            fileName: file.fileName } } } // Match by specific fields to ensure correct item removal
       );
   
       res.send({ message: 'File removed from liked', payload: result });
@@ -279,54 +280,66 @@ userApp.get('/user-uploads/:username/daily', expressAsyncHandler(async (req, res
 }));
 
 
-
 userApp.get('/user-streak/:username', async (req, res) => {
     const username = req.params.username;
     try {
-      const uploadsCollection =req.app.get('users');
+      const uploadsCollection = req.app.get('users');
       console.log(uploadsCollection);
+  
       // Fetch all uploads for the user, sorted by date (newest first)
       const uploads = await uploadsCollection.find({ username }).sort({ date: -1 }).toArray();
+  
+      // If no uploads are found, return zero streaks
       if (!uploads.length) {
         return res.status(200).json({ currentStreak: 0, longestStreak: 0 });
       }
-      // Calculate streaks
+  
       let currentStreak = 0;
       let longestStreak = 0;
-      let streak = 0;
+      let streak = 1; // Initialize streak to 1 for the first upload
       let today = moment().startOf('day');
   
+      // Iterate through the uploads starting from the first (newest) upload
       for (let i = 0; i < uploads.length; i++) {
         let uploadDate = moment(uploads[i].date).startOf('day');
-        let difference = today.diff(uploadDate, 'days');
   
-        if (difference === 0 || difference === 1) {
+        // If this is the first upload, set the current day to this upload date
+        if (i === 0) {
+          today = uploadDate;
+          currentStreak = 1; // Start counting the current streak
+          continue;
+        }
+  
+        // Calculate the difference between the current upload and the previous upload
+        let previousUploadDate = moment(uploads[i - 1].date).startOf('day');
+        let difference = previousUploadDate.diff(uploadDate, 'days');
+  
+        // Continue streak if the dates are consecutive
+        if (difference === 1) {
           streak++;
           currentStreak = streak;
-          today = today.subtract(1, 'days');
-        } else {
+        } else if (difference > 1) {
+          // If the dates are not consecutive, reset the streak
           if (streak > longestStreak) {
-            longestStreak = streak;
+            longestStreak = streak; // Update longest streak before resetting
           }
-          streak = 0;
-          today = moment(uploads[i].date).startOf('day');
+          streak = 1; // Reset streak for the next set of consecutive dates
         }
       }
   
-      // Update longest streak if current streak was the longest
+      // Update the longest streak if the last streak was the longest
       if (streak > longestStreak) {
         longestStreak = streak;
       }
   
       res.status(200).json({
         currentStreak,
-        longestStreak
+        longestStreak,
       });
     } catch (err) {
       console.error('Error fetching user streak:', err);
       res.status(500).json({ error: 'Error fetching user streak' });
     }
   });
-
-
+  
 module.exports = userApp;
