@@ -1,11 +1,11 @@
 const exp = require('express');
+const moment = require('moment');
 const userApp = exp.Router();
 const {db}=require('mongodb')
 const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const tokenVerify = require('../middlewares/tokenVerify')
 const expressAsyncHandler=require('express-async-handler')
-
 //app body parser middleware
 userApp.use(exp.json())
 require('dotenv').config();
@@ -129,7 +129,62 @@ userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
     console.log(result)
     res.send({message:"file added to liked",payload:result})
  }))
-
+ userApp.put('/remove-from-liked/:username',expressAsyncHandler(async(req,res)=>{
+    //get user collection obj
+    const userCollection=req.app.get('users');
+     let usernameURL=req.params.username;
+     let productObj=req.body;
+    let result= await userCollection.updateOne({username:usernameURL},{$pull:{liked:productObj}})
+    console.log(result)
+    res.send({message:"file deleted from liked",payload:result})
+ }))
+ userApp.get('/user-streak/:username', async (req, res) => {
+    const username = req.params.username;
+    try {
+      const uploadsCollection =req.app.get('users');
+      console.log(uploadsCollection);
+      // Fetch all uploads for the user, sorted by date (newest first)
+      const uploads = await uploadsCollection.find({ username }).sort({ date: -1 }).toArray();
+      if (!uploads.length) {
+        return res.status(200).json({ currentStreak: 0, longestStreak: 0 });
+      }
+      // Calculate streaks
+      let currentStreak = 0;
+      let longestStreak = 0;
+      let streak = 0;
+      let today = moment().startOf('day');
+  
+      for (let i = 0; i < uploads.length; i++) {
+        let uploadDate = moment(uploads[i].date).startOf('day');
+        let difference = today.diff(uploadDate, 'days');
+  
+        if (difference === 0 || difference === 1) {
+          streak++;
+          currentStreak = streak;
+          today = today.subtract(1, 'days');
+        } else {
+          if (streak > longestStreak) {
+            longestStreak = streak;
+          }
+          streak = 0;
+          today = moment(uploads[i].date).startOf('day');
+        }
+      }
+  
+      // Update longest streak if current streak was the longest
+      if (streak > longestStreak) {
+        longestStreak = streak;
+      }
+  
+      res.status(200).json({
+        currentStreak,
+        longestStreak
+      });
+    } catch (err) {
+      console.error('Error fetching user streak:', err);
+      res.status(500).json({ error: 'Error fetching user streak' });
+    }
+  });
  //fetch user uploads
  userApp.get('/user-uploads/:username', expressAsyncHandler(async (req, res) => {
     const userCollection = req.app.get('users');
