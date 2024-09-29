@@ -11,28 +11,6 @@ const moment = require('moment')
 userApp.use(exp.json())
 require('dotenv').config();
 
-//create sample rest api(req handlers-routes)
-//route for get users (public route)
-// userApp.get('/users',tokenVerify,expressAsyncHandler(async (req,res)=>{
-//     //get user collection obj
-//     const userCollection=req.app.get('users');
-//     //get users data from collection of DB
-//     let usersdata=await userCollection.find().toArray();
-//     //send users data to client
-//     res.send({message:"users", payload:usersdata})
-// }))
-//route to get specific user by username (protected route)
-// userApp.get('/users/:username',tokenVerify,expressAsyncHandler(async(req,res)=>{
-//    //get userCollection obj
-//    const userCollection=req.app.get('users');
-//    //get id from url
-//    const usernameURL=req.params.username;
-//    //find user by username
-//    let user=await userCollection.findOne({username:{$eq:{usernameURL}}});
-//    //send res
-//    res.send({message:"user",payload:user})
-// }))
-
 //route to post or create user (public route)
 userApp.post('/user',expressAsyncHandler(async (req,res)=>{
     const userCollection=req.app.get('users');
@@ -176,6 +154,26 @@ userApp.put('/remove-from-liked/:username', expressAsyncHandler(async (req, res)
     }
   }));
 
+  //delete uploads
+  userApp.delete('/delete-uploads/:username', expressAsyncHandler(async (req, res) => {
+    const userCollection = req.app.get('users');
+    const usernameURL = req.params.username;
+    const { driveLink, fileName } = req.body; 
+    try {
+        const result = await userCollection.updateOne(
+            { username: usernameURL }, 
+            { $pull: { uploads: { driveLink: driveLink, fileName: fileName } } } 
+        );
+        if (result.modifiedCount > 0) {
+            res.send({ message: 'File successfully deleted from array' });
+        } else {
+            res.status(404).send({ message: 'File not found or already deleted' });
+        }
+    } catch (error) {
+        console.error('Error deleting file from array:', error);
+        res.status(500).send({ error: 'Error deleting file', details: error.message });
+    }
+}));
 
   //fetch user saved
   userApp.get('/user-saved/:username',expressAsyncHandler(async(req,res)=>{
