@@ -212,6 +212,26 @@ userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
         res.status(500).send({ error: 'Error fetching user uploads', details: error.message });
     }
 }));
+userApp.delete('/delete-uploads/:username', expressAsyncHandler(async (req, res) => {
+    const userCollection = req.app.get('users');
+    const usernameURL = req.params.username;
+    const { driveLink, fileName } = req.body; 
+    try {
+        const result = await userCollection.updateOne(
+            { username: usernameURL }, 
+            { $pull: { uploads: { driveLink: driveLink, fileName: fileName } } } 
+        );
+        if (result.modifiedCount > 0) {
+            res.send({ message: 'File successfully deleted from array' });
+        } else {
+            res.status(404).send({ message: 'File not found or already deleted' });
+        }
+    } catch (error) {
+        console.error('Error deleting file from array:', error);
+        res.status(500).send({ error: 'Error deleting file', details: error.message });
+    }
+}));
+
 userApp.get('/user-uploads/:username/daily', expressAsyncHandler(async (req, res) => {
     const userCollection = req.app.get('users');
     const usernameURL = req.params.username;
