@@ -50,12 +50,17 @@ userApp.post('/user',expressAsyncHandler(async (req,res)=>{
         user.liked=[];
         //save user
         await userCollection.insertOne(user)
+        let totalUsers = await userCollection.countDocuments();
         //send res
-        res.send({message:"user created",payload:existUser})
+        res.send({message:"user created",payload:{existUser,totalUsers}})
     }
 
 }))
-
+userApp.get('/users-count', expressAsyncHandler(async (req, res) => {
+    const userCollection = req.app.get('users');
+    let totalUsers = await userCollection.countDocuments();
+    res.send({ message: "Total users fetched", payload: { totalUsers } });
+}));
 //user login or authentication (public route)
 userApp.post('/login',expressAsyncHandler(async(req,res)=>{
     const userCollection=req.app.get('users');
