@@ -27,7 +27,7 @@ courseApp.get('/:courseName/files', expressAsyncHandler(async (req, res, next) =
 // Route to upload a file for a specific course
 courseApp.post('/:courseName/files', expressAsyncHandler(async (req, res) => {
     try {
-        const { url, fileName, tags, uploaderName,userId } = req.body;
+        const { url, fileName, tags, uploaderName, userId } = req.body;
         console.log(req.body); 
         const courseName = req.params.courseName;
 
@@ -35,17 +35,20 @@ courseApp.post('/:courseName/files', expressAsyncHandler(async (req, res) => {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
-        // const db = getDb(req);
+        // Get the current date and time for the upload
+        const uploadDate = new Date();  // Automatically captures the current date and time
+
+        // Collections
         const coursesCollection = req.app.get('courses');
-        const usersCollection = req.app.get('users')
+        const usersCollection = req.app.get('users');
 
         let course = await coursesCollection.findOne({ courseName });
         if (!course) {
             course = { courseName, files: [] };
         }
 
-        const newFile = { url, fileName, tags, uploaderName };
-console.log(newFile);
+        const newFile = { url, fileName, tags, uploaderName, uploadDate };
+
         // Add the file to the course's files array
         course.files.push(newFile);
         await coursesCollection.updateOne(
