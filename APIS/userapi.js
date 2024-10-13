@@ -194,7 +194,6 @@ userApp.put('/add-to-saved/:username',expressAsyncHandler(async(req,res)=>{
  userApp.get('/user-uploads/:username', expressAsyncHandler(async (req, res) => {
     const userCollection = req.app.get('users');
     const usernameURL = req.params.username;
-
     try {
         const user = await userCollection.findOne({ username: usernameURL });
 
@@ -236,7 +235,24 @@ userApp.delete('/delete-uploads/:username', expressAsyncHandler(async (req, res)
         res.status(500).send({ error: 'Error deleting file', details: error.message });
     }
 }));
+userApp.put('/update-user', async (req, res) => {
+    const { id, username, email, mobile, image } = req.body;
+    try {
+        const result = await db.collection('users').updateOne(
+            { _id: new require('mongodb').ObjectId(id) }, 
+            { $set: { username, email, mobile, image } }
+        );
 
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({ message: 'User updated' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 userApp.get('/user-uploads/:username/daily', expressAsyncHandler(async (req, res) => {
     const userCollection = req.app.get('users');
     const usernameURL = req.params.username;
