@@ -68,16 +68,15 @@ userApp.post('/login',expressAsyncHandler(async(req,res)=>{
 }))
 
 //route to update user (protected route)
-userApp.put('/user',expressAsyncHandler(async (req,res)=>{
-    const userCollection=req.app.get('users');
-    //get modified user data from req body
-    let modified=req.body
-    //modify by username
-    await userCollection.updateOne({username:modified.username},{$set:{...modified}})
-    //send res
-    res.send({message:"user updated"})
+userApp.put('/update-user', expressAsyncHandler(async (req, res) => {
+    console.log('Request received to update user:', req.body);
+    const userCollection = req.app.get('users');
+    let modified = req.body;
+    console.log('Modified User Data:', modified);
+    await userCollection.updateOne({username: modified.username}, {$set: {...modified}});
+    res.send({message: "user updated"});
+}));
 
-}))
 
 //route to delete user (protected route)
 userApp.delete('/user/:username',tokenVerify,expressAsyncHandler(async (req,res)=>{
@@ -159,21 +158,38 @@ userApp.put('/remove-from-liked/:username', expressAsyncHandler(async (req, res)
     const userCollection = req.app.get('users');
     const usernameURL = req.params.username;
     const { driveLink, fileName } = req.body; 
+    
     try {
-        const result = await userCollection.updateOne(
+        // Step 1: Remove from 'uploads' array
+        await userCollection.updateOne(
             { username: usernameURL }, 
             { $pull: { uploads: { driveLink: driveLink, fileName: fileName } } } 
         );
-        if (result.modifiedCount > 0) {
-            res.send({ message: 'File successfully deleted from array' });
-        } else {
-            res.status(404).send({ message: 'File not found or already deleted' });
-        }
+
+        // Step 2: Remove from 'liked', 'saved', and 'courses' arrays
+        const removeFromCollections = async (collectionName) => {
+            return userCollection.updateMany(
+                { [collectionName]: { $elemMatch: { driveLink: driveLink, fileName: fileName } } }, 
+                { $pull: { [collectionName]: { driveLink: driveLink, fileName: fileName } } }
+            );
+        };
+
+        // Remove from all collections simultaneously
+        await Promise.all([
+            removeFromCollections('liked'), // Remove from 'liked' array
+            removeFromCollections('saved'), // Remove from 'saved' array
+            removeFromCollections('courses') // Remove from 'courses' array
+        ]);
+
+        // Send success message after removal
+        res.send({ message: 'File successfully deleted from all related collections' });
+
     } catch (error) {
-        console.error('Error deleting file from array:', error);
-        res.status(500).send({ error: 'Error deleting file', details: error.message });
+        console.error('Error deleting file from collections:', error);
+        res.status(500).send({ error: 'Error deleting file from collections', details: error.message });
     }
 }));
+
 
   //fetch user saved
   userApp.get('/user-saved/:username',expressAsyncHandler(async(req,res)=>{
@@ -188,7 +204,7 @@ userApp.put('/remove-from-liked/:username', expressAsyncHandler(async (req, res)
         res.send({
             message: "User saved",
             payload: {
-                saved // Ensure you are sending the correct key here
+                saved 
             }
         });
     } catch (error) {
@@ -210,7 +226,7 @@ userApp.put('/remove-from-liked/:username', expressAsyncHandler(async (req, res)
         res.send({
             message: "User liked",
             payload: {
-                liked // Ensure you are sending the correct key here
+                liked
             }
         });
     } catch (error) {
