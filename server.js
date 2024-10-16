@@ -7,7 +7,7 @@ require('dotenv').config()
 const cors=require('cors');
 app.use(cors({
     // origin:'http://localhost:5173'
-    origin:'*'
+    origin:'https://resolink.vercel.app/'
 }))
 
 //import mongo client
