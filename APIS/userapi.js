@@ -235,7 +235,7 @@ userApp.put('/remove-from-liked/:username', expressAsyncHandler(async (req, res)
     }
  }))
 
-
+//fetch user uploads
  userApp.get('/user-uploads/:username', expressAsyncHandler(async (req, res) => {
     const userCollection = req.app.get('users');
     const usernameURL = req.params.username;
@@ -256,6 +256,32 @@ userApp.put('/remove-from-liked/:username', expressAsyncHandler(async (req, res)
         res.status(500).send({ error: 'Error fetching user uploads', details: error.message });
     }
 }));
+
+
+
+// Route to get total users and total uploads
+userApp.get('/stats', expressAsyncHandler(async (req, res) => {
+    try {
+        const userCollection = req.app.get('users');
+      // Count total users
+      const totalUsers = await userCollection.countDocuments();
+  
+      // Count total uploaded files
+      const users = await userCollection.find({}, { uploads: 1 }).toArray(); // Get only the uploads field
+      const totalUploads = users.reduce((total, user) => total + user.uploads.length, 0);
+  
+      // Respond with the statistics
+      res.json({
+        totalUsers,
+        totalUploads
+      });
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }));
+
+
 
 userApp.get('/user-uploads/:username/daily', expressAsyncHandler(async (req, res) => {
     const userCollection = req.app.get('users');
