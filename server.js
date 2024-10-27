@@ -5,6 +5,7 @@ const app=exp();
 
 require('dotenv').config()
 const cors=require('cors');
+
 app.use(cors({
    // origin:'http://localhost:5173'
     origin:'https://resolink.vercel.app'
@@ -14,6 +15,7 @@ app.use(cors({
 //import mongo client
 const {MongoClient}=require('mongodb');
 let mC=new MongoClient(process.env.DB_URL);
+
 mC.connect()
     .then((connectionObj)=>{
         console.log("Connected to db")
