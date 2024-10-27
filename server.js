@@ -53,3 +53,8 @@ app.use('*',(req,res,next)=>{
 app.use((err,req,res,next)=>{
     res.send({message:"Error occured",errorMessage:err.message})
 })
+
+// Serve index.html for unmatched routes (React Router handling)
+app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
+});
